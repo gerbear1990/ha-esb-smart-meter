@@ -1,0 +1,86 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ESB Smart Meter",
+        "description": "Configure ESB Networks CSV import settings.",
+        "data": {
+          "name": "Name",
+          "import_path": "CSV import path",
+          "time_shift_minutes": "Time shift in minutes",
+          "cheap_start": "Cheap rate start time",
+          "cheap_end": "Cheap rate end time",
+          "cheap_rate": "Cheap rate",
+          "night_rate": "Night rate",
+          "day_rate": "Day rate",
+          "peak_rate": "Peak rate",
+          "other_rate": "Other rate"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_import": {
+        "name": "Last import"
+      },
+      "last_reading": {
+        "name": "Last reading"
+      },
+      "records": {
+        "name": "Records"
+      },
+      "coverage_days": {
+        "name": "Coverage days"
+      },
+      "latest_interval_energy": {
+        "name": "Latest interval energy"
+      },
+      "total_import": {
+        "name": "Total import"
+      },
+      "today_energy": {
+        "name": "Today energy"
+      },
+      "today_cheap_energy": {
+        "name": "Today cheap energy"
+      },
+      "today_night_energy": {
+        "name": "Today night energy"
+      },
+      "today_day_energy": {
+        "name": "Today day energy"
+      },
+      "today_peak_energy": {
+        "name": "Today peak energy"
+      },
+      "today_cost": {
+        "name": "Today cost"
+      },
+      "yesterday_energy": {
+        "name": "Yesterday energy"
+      },
+      "yesterday_cost": {
+        "name": "Yesterday cost"
+      },
+      "month_energy": {
+        "name": "Month energy"
+      },
+      "month_cost": {
+        "name": "Month cost"
+      },
+      "current_rate_bucket": {
+        "name": "Current rate bucket"
+      },
+      "current_rate": {
+        "name": "Current rate"
+      }
+    }
+  },
+  "services": {
+    "reload": {
+      "name": "Reload ESB smart meter data",
+      "description": "Re-scan the configured ESB CSV folder and update all ESB Smart Meter sensors."
+    }
+  }
+}
