@@ -1,14 +1,37 @@
 # ESB Smart Meter for Home Assistant
 
-A Home Assistant custom integration that reads ESB Networks smart meter CSV exports and creates sensors for recent energy usage, cost estimates, current rate bucket, and import health.
+A Home Assistant custom integration for ESB Networks smart meter CSV exports.
+It reads interval CSV files from a local folder and creates sensors for energy
+usage, estimated cost, rate buckets, import health, and recent totals.
+
+This repository is intended for people who already download their ESB Networks
+half-hourly usage data and want Home Assistant sensors from those CSV files.
+
+## Features
+
+- Imports ESB interval CSV files from a configured Home Assistant folder.
+- Tracks total imported kWh, today's usage, yesterday's usage, monthly usage,
+  and the latest interval reading.
+- Estimates energy cost using configurable `cheap`, `night`, `day`, `peak`,
+  and `other` rates.
+- Exposes the current rate bucket and current rate as sensors.
+- Adds a `esb_smart_meter.reload` service to rescan CSV files on demand.
+- Deduplicates readings by timestamp when multiple CSV files overlap.
 
 ## Install
 
-Copy `custom_components/esb_smart_meter` into your Home Assistant `custom_components` directory, then restart Home Assistant.
+1. Copy `custom_components/esb_smart_meter` into your Home Assistant
+   `custom_components` directory.
+2. Restart Home Assistant.
+3. Add the integration from the Home Assistant UI, or configure it with YAML.
+
+This is a manual custom integration. It is not currently packaged for HACS.
 
 ## Configure
 
-You can configure the integration from the Home Assistant UI, or import a YAML configuration like the sanitized example in `examples/configuration.example.yaml`:
+You can configure the integration from the Home Assistant UI, or import a YAML
+configuration like the sanitized example in
+`examples/configuration.example.yaml`:
 
 ```yaml
 esb_smart_meter:
@@ -25,8 +48,71 @@ esb_smart_meter:
     other: 0.34
 ```
 
-Put ESB interval CSV exports in the configured `import_path`, then call the `esb_smart_meter.reload` service to rescan the folder.
+Create the configured folder, for example `/config/esb_energy`, and place your
+ESB Networks interval CSV exports there. Home Assistant will scan the folder on
+startup and periodically afterward. You can also call the
+`esb_smart_meter.reload` service to rescan immediately.
+
+## CSV Format
+
+The integration expects ESB interval CSV exports with a timestamp column and a
+kWh value column. It accepts common column names including:
+
+- `Read Date and End Time`
+- `Read Date And End Time`
+- `read_date_and_end_time`
+- `datetime`
+- `timestamp`
+- `Read Value`
+- `Read Value (kWh)`
+- `read_value`
+- `kWh`
+- `kwh`
+
+Timestamp values are parsed using common ESB-style date formats such as
+`DD-MM-YYYY HH:MM`, `YYYY-MM-DD HH:MM`, and ISO timestamps.
+
+## Sensors
+
+The integration creates sensors for:
+
+- Last import time and last reading time.
+- Imported record count and coverage days.
+- Latest interval energy.
+- Total imported energy.
+- Today, yesterday, and month energy totals.
+- Today, yesterday, and month estimated cost.
+- Per-rate totals for current-day usage.
+- Current rate bucket and current rate.
+
+Sensor availability depends on whether valid CSV rows have been imported. Basic
+diagnostic sensors remain available even when no CSV data has been found.
 
 ## Privacy
 
-Do not commit your real Home Assistant `configuration.yaml`, `secrets.yaml`, `.storage` directory, database files, logs, or ESB CSV exports. They can contain account details, meter identifiers, local network addresses, device names, or usage patterns.
+Do not commit your real Home Assistant `configuration.yaml`, `secrets.yaml`,
+`.storage` directory, database files, logs, or ESB CSV exports. They can contain
+account details, meter identifiers, local network addresses, device names, or
+usage patterns.
+
+This repository intentionally contains only sanitized source code and example
+configuration. It does not include personal meter data, MPRNs, ESB account
+credentials, Home Assistant storage, logs, or local network configuration.
+
+## Acknowledgements
+
+This project builds on work and ideas from two public ESB smart meter projects:
+
+- [badger707/esb-smart-meter-reading-automation](https://github.com/badger707/esb-smart-meter-reading-automation)
+  by `badger707`, which documented and implemented an ESB Networks smart meter
+  data download flow.
+- [raydex79/ESB-Networks-Energy-Data-Automation-Grafana-CSV](https://github.com/raydex79/ESB-Networks-Energy-Data-Automation-Grafana-CSV)
+  by `raydex79`, which adapted ESB smart meter data processing for Grafana CSV
+  workflows.
+
+Thanks to both creators for publishing their work.
+
+## Disclaimer
+
+This project is unofficial and is not affiliated with, endorsed by, or supported
+by ESB Networks or Home Assistant.
