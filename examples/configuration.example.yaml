@@ -1,0 +1,12 @@
+esb_smart_meter:
+  name: ESB Smart Meter
+  import_path: /config/esb_energy
+  time_shift_minutes: -30
+  cheap_start: "02:00"
+  cheap_end: "04:00"
+  rates:
+    cheap: 0.08
+    night: 0.18
+    day: 0.34
+    peak: 0.36
+    other: 0.34

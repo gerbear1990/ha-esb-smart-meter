@@ -1,0 +1,3 @@
+reload:
+  name: Reload ESB smart meter data
+  description: Re-scan the configured ESB CSV folder and update all ESB Smart Meter sensors.

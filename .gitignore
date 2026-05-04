@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Home Assistant local/private state
+.storage/
+*.db
+*.db-*
+home-assistant.log*
+secrets.yaml
+known_devices.yaml
+automations.yaml
+scripts.yaml
+scenes.yaml
+configuration.yaml
+ha_config/
+
+# ESB exports and generated data
+*.csv
+*.tsv
+*.xlsx
+esb_energy/
+downloads/
+
+# Local/editor files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
