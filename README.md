@@ -20,12 +20,28 @@ half-hourly usage data and want Home Assistant sensors from those CSV files.
 
 ## Install
 
+### HACS custom repository
+
+[![Open your Home Assistant instance and add this repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=gerbear1990&repository=ha-esb-smart-meter&category=integration)
+
+1. Click the button above to add this repository to HACS as a custom
+   integration repository.
+2. Download the integration in HACS.
+3. Restart Home Assistant.
+4. Add the integration from Home Assistant:
+
+[![Open your Home Assistant instance and start configuring this integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=esb_smart_meter)
+
+The first button requires HACS to already be installed. This repository does not
+need to be listed in the default HACS catalog to be added as a custom
+repository.
+
+### Manual install
+
 1. Copy `custom_components/esb_smart_meter` into your Home Assistant
    `custom_components` directory.
 2. Restart Home Assistant.
 3. Add the integration from the Home Assistant UI, or configure it with YAML.
-
-This is a manual custom integration. It is not currently packaged for HACS.
 
 ## Configure
 
