@@ -29,6 +29,7 @@ from .const import (
     CONF_PEAK_START,
     CONF_RATES,
     CONF_REBUILD,
+    CONF_STALE_HOURS,
     CONF_STANDING_CHARGE,
     CONF_TIME_SHIFT_MINUTES,
     CONF_USERNAME,
@@ -45,6 +46,7 @@ from .const import (
     DEFAULT_PEAK_END,
     DEFAULT_PEAK_START,
     DEFAULT_RATES,
+    DEFAULT_STALE_HOURS,
     DEFAULT_STANDING_CHARGE,
     DEFAULT_TIME_SHIFT_MINUTES,
     DEFAULT_VAT_PERCENT,
@@ -60,6 +62,7 @@ from .statistics import async_backfill_statistics
 
 LOGGER = logging.getLogger(__name__)
 ISSUE_NO_DATA = "no_csv_data"
+ISSUE_STALE = "data_stale"
 
 RATE_SCHEMA = vol.Schema(
     {
@@ -200,21 +203,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     @callback
+    def _set_issue(key: str, active: bool, placeholders: dict[str, str]) -> None:
+        """Raise or clear one repair issue for this entry."""
+        issue_id = f"{key}_{entry.entry_id}"
+        if not active:
+            ir.async_delete_issue(hass, DOMAIN, issue_id)
+            return
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            issue_id,
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key=key,
+            translation_placeholders=placeholders,
+        )
+
+    @callback
     def _sync_repair_issue() -> None:
-        """Raise or clear the 'no data' repair issue based on coordinator state."""
-        available = bool(coordinator.data and coordinator.data.get("available"))
-        if available:
-            ir.async_delete_issue(hass, DOMAIN, f"{ISSUE_NO_DATA}_{entry.entry_id}")
-        else:
-            ir.async_create_issue(
-                hass,
-                DOMAIN,
-                f"{ISSUE_NO_DATA}_{entry.entry_id}",
-                is_fixable=False,
-                severity=ir.IssueSeverity.WARNING,
-                translation_key=ISSUE_NO_DATA,
-                translation_placeholders={"path": str(coordinator.import_path)},
-            )
+        """Raise or clear the 'no data' and 'stale data' repair issues."""
+        data = coordinator.data or {}
+        available = bool(data.get("available"))
+        # Absent from the no-data payload, so the no-data issue wins.
+        age = data.get("last_reading_age_hours")
+        threshold = entry.options.get(CONF_STALE_HOURS, DEFAULT_STALE_HOURS)
+        _set_issue(
+            ISSUE_NO_DATA, not available, {"path": str(coordinator.import_path)}
+        )
+        _set_issue(
+            ISSUE_STALE,
+            available and age is not None and age > threshold,
+            {"age": str(round(age or 0)), "threshold": str(threshold)},
+        )
 
     _sync_repair_issue()
     entry.async_on_unload(coordinator.async_add_listener(_sync_repair_issue))
@@ -267,6 +287,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload an ESB Smart Meter config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        ir.async_delete_issue(hass, DOMAIN, f"{ISSUE_NO_DATA}_{entry.entry_id}")
+        for key in (ISSUE_NO_DATA, ISSUE_STALE):
+            ir.async_delete_issue(hass, DOMAIN, f"{key}_{entry.entry_id}")
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok

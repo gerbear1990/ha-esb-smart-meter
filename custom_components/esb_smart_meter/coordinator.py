@@ -14,6 +14,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
@@ -191,7 +192,11 @@ class ESBSmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         rate-limits logins heavily (roughly a couple of attempts per day), so
         it must not run on the regular polling interval.
         """
-        await self.hass.async_add_executor_job(self._download_latest)
+        try:
+            await self.hass.async_add_executor_job(self._download_latest)
+        except RuntimeError as err:  # ESBDownloadError; downloader is imported lazily
+            # A plain RuntimeError shows as "Unknown error" in the UI.
+            raise HomeAssistantError(str(err)) from err
         await self.async_request_refresh()
 
     def _download_latest(self) -> None:

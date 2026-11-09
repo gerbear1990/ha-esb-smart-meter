@@ -59,7 +59,8 @@ have the interval CSV files this integration reads.
   Home Assistant can fetch the CSV for you.
 - Options flow: change paths, tariff bands, rates, VAT, and discount at any time
   without removing the integration.
-- Diagnostics download and a repair issue when no data is found.
+- Diagnostics download, and repair issues when no data is found or when the
+  newest reading is older than a configurable threshold (default 72 hours).
 
 ## HACS Installation
 
