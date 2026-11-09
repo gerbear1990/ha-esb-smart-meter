@@ -62,6 +62,11 @@ DEFAULT_DISCOUNT_PERCENT = 0.0
 DEFAULT_EXPORT_RATE = 0.0
 DEFAULT_SCAN_INTERVAL = timedelta(minutes=30)
 
+# Raise a repair when the newest reading is older than this. ESB normally
+# publishes with a 1-3 day lag, so the default sits clear of that.
+CONF_STALE_HOURS = "stale_hours"
+DEFAULT_STALE_HOURS = 72
+
 # Rate buckets, in currency units per kWh.
 DEFAULT_RATES = {
     "cheap": 0.08,

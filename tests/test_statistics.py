@@ -232,12 +232,13 @@ async def test_refresh_picks_up_new_hours(hass, tmp_path):
 
     # Setting up the entry pulls in the component itself.
     assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    # The backfill runs as a background task, which a plain block_till_done skips.
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert await _sums(hass, ENERGY_ID) == [(1.0, 1.0)]
 
     _write_csv(csv_path, [("01-01-2026 00:30", 1.0), ("01-01-2026 05:00", 3.0)])
     coordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_refresh()
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     assert await _sums(hass, ENERGY_ID) == [(1.0, 1.0), (3.0, 4.0)]

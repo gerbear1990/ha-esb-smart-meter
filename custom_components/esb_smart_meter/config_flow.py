@@ -15,6 +15,7 @@ from .const import (
     CONF_CURRENCY,
     CONF_DAY_START,
     CONF_DISCOUNT_PERCENT,
+    CONF_STALE_HOURS,
     CONF_EXPORT_RATE,
     CONF_IMPORT_PATH,
     CONF_MPRN,
@@ -32,6 +33,7 @@ from .const import (
     DEFAULT_CURRENCY,
     DEFAULT_DAY_START,
     DEFAULT_DISCOUNT_PERCENT,
+    DEFAULT_STALE_HOURS,
     DEFAULT_EXPORT_RATE,
     DEFAULT_IMPORT_PATH,
     DEFAULT_NIGHT_START,
@@ -222,5 +224,9 @@ def _options_schema(entry: config_entries.ConfigEntry) -> vol.Schema:
             vol.Required("day_rate", default=rates["day"]): vol.Coerce(float),
             vol.Required("peak_rate", default=rates["peak"]): vol.Coerce(float),
             vol.Required("other_rate", default=rates["other"]): vol.Coerce(float),
+            vol.Required(
+                CONF_STALE_HOURS,
+                default=_current(entry, CONF_STALE_HOURS, DEFAULT_STALE_HOURS),
+            ): vol.All(vol.Coerce(int), vol.Range(min=1)),
         }
     )
