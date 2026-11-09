@@ -169,7 +169,7 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
 
         sleep(3)
         response_6 = session.get(
-            "https://myaccount.esbnetworks.ie/Api/HistoricConsumption",
+            "https://myaccount.esbnetworks.ie/energymanagement/historic-consumption",
             headers={
                 "User-Agent": USER_AGENT,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -193,8 +193,8 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
                 "Accept": "*/*",
                 "Accept-Language": "en-US,en;q=0.5",
                 "Accept-Encoding": "gzip, deflate, br",
-                "X-Returnurl": "https://myaccount.esbnetworks.ie/Api/HistoricConsumption",
-                "Referer": "https://myaccount.esbnetworks.ie/Api/HistoricConsumption",
+                "X-Returnurl": "https://myaccount.esbnetworks.ie/energymanagement/historic-consumption",
+                "Referer": "https://myaccount.esbnetworks.ie/energymanagement/historic-consumption",
             },
             cookies={
                 "ARRAffinity": cookies_4.get("ARRAffinity"),
@@ -206,15 +206,15 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
         token = json.loads(response_7.text)["token"]
 
         response_8 = session.post(
-            "https://myaccount.esbnetworks.ie/DataHub/DownloadHdfPeriodic",
+            "https://myaccount.esbnetworks.ie/energymanagement/api/consumption/DownloadHdfPeriodic",
             headers={
                 "User-Agent": USER_AGENT,
                 "Accept": "*/*",
                 "Accept-Language": "en-US,en;q=0.5",
                 "Accept-Encoding": "gzip, deflate, br",
-                "Referer": "https://myaccount.esbnetworks.ie/Api/HistoricConsumption",
+                "Referer": "https://myaccount.esbnetworks.ie/energymanagement/historic-consumption",
                 "Content-Type": "application/json",
-                "X-Returnurl": "https://myaccount.esbnetworks.ie/Api/HistoricConsumption",
+                "X-Returnurl": "https://myaccount.esbnetworks.ie/energymanagement/historic-consumption",
                 "X-Xsrf-Token": token,
                 "Origin": "https://myaccount.esbnetworks.ie",
             },
