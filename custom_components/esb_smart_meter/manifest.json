@@ -8,6 +8,6 @@
   "integration_type": "service",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/gerbear1990/ha-esb-smart-meter/issues",
-  "requirements": ["beautifulsoup4>=4.12.3"],
+  "requirements": ["beautifulsoup4>=4.12.3", "requests>=2.31.0"],
   "version": "0.6.3"
 }

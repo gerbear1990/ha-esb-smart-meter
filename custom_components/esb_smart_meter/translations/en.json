@@ -3,6 +3,9 @@
     "abort": {
       "already_configured": "ESB Smart Meter is already configured. Only one instance is supported."
     },
+    "error": {
+      "invalid_time": "Enter time in 24-hour HH:MM format (e.g. 02:00)."
+    },
     "step": {
       "user": {
         "title": "ESB Smart Meter",
@@ -35,6 +38,9 @@
     }
   },
   "options": {
+    "error": {
+      "invalid_time": "Enter time in 24-hour HH:MM format (e.g. 02:00)."
+    },
     "step": {
       "init": {
         "title": "ESB Smart Meter options",
@@ -58,7 +64,10 @@
           "day_rate": "Day rate",
           "peak_rate": "Peak rate",
           "other_rate": "Other rate",
-          "stale_hours": "Warn when data is older than (hours)"
+          "stale_hours": "Warn when data is older than (hours)",
+          "username": "ESB portal email (optional)",
+          "password": "ESB portal password (optional)",
+          "mprn": "MPRN (optional)"
         }
       }
     }

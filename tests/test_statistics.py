@@ -1,7 +1,12 @@
 """Tests for the long-term statistics backfill."""
 
 import pytest
-from homeassistant.components.recorder.statistics import statistics_during_period
+from homeassistant.components.recorder import get_instance
+from homeassistant.components.recorder.models import StatisticMeanType
+from homeassistant.components.recorder.statistics import (
+    get_metadata,
+    statistics_during_period,
+)
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.components.recorder.common import (
@@ -242,3 +247,19 @@ async def test_refresh_picks_up_new_hours(hass, tmp_path):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     assert await _sums(hass, ENERGY_ID) == [(1.0, 1.0), (3.0, 4.0)]
+
+
+async def test_metadata_sets_mean_type_and_unit_class(hass, tmp_path):
+    """External statistics must declare mean_type=NONE and energy unit_class."""
+    _write_csv(tmp_path / "a.csv", [("01-01-2026 00:30", 1.5)])
+    coordinator = ESBSmartMeterCoordinator(hass, _entry(tmp_path))
+    await async_backfill_statistics(hass, coordinator)
+    await async_wait_recording_done(hass)
+
+    meta = await get_instance(hass).async_add_executor_job(
+        lambda: get_metadata(hass, statistic_ids={ENERGY_ID, COST_ID})
+    )
+    assert meta[ENERGY_ID][1]["mean_type"] == StatisticMeanType.NONE
+    assert meta[ENERGY_ID][1]["unit_class"] == "energy"
+    assert meta[COST_ID][1]["mean_type"] == StatisticMeanType.NONE
+    assert meta[COST_ID][1]["unit_class"] is None

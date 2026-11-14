@@ -180,9 +180,9 @@ class ESBSmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def has_download_credentials(self) -> bool:
         """Return True if ESB portal download is configured."""
         return bool(
-            self.entry.data.get(CONF_USERNAME)
-            and self.entry.data.get(CONF_PASSWORD)
-            and self.entry.data.get(CONF_MPRN)
+            self._conf(CONF_USERNAME, "")
+            and self._conf(CONF_PASSWORD, "")
+            and self._conf(CONF_MPRN, "")
         )
 
     async def async_download_latest(self) -> None:
@@ -205,9 +205,9 @@ class ESBSmartMeterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # only touched when the user actually uses the portal download.
         from .downloader import ESBDownloadError, download_latest_csv
 
-        username = self.entry.data.get(CONF_USERNAME)
-        password = self.entry.data.get(CONF_PASSWORD)
-        mprn = self.entry.data.get(CONF_MPRN)
+        username = self._conf(CONF_USERNAME, "")
+        password = self._conf(CONF_PASSWORD, "")
+        mprn = self._conf(CONF_MPRN, "")
         if not username or not password or not mprn:
             raise ESBDownloadError(
                 "ESB username, password, and MPRN must be configured to download."
@@ -768,10 +768,10 @@ def _parse_datetime(raw: str) -> datetime | None:
 
 
 def _as_local(value: datetime) -> datetime:
-    """Attach HA's local timezone to a naive wall-clock datetime (DST-aware)."""
-    if value.tzinfo is not None:
-        return value
+    """Attach or convert to HA's local timezone (DST-aware)."""
     tzinfo = dt_util.DEFAULT_TIME_ZONE or dt_util.UTC
+    if value.tzinfo is not None:
+        return value.astimezone(tzinfo)
     return value.replace(tzinfo=tzinfo)
 
 

@@ -469,3 +469,29 @@ async def test_time_shift_applied(hass, tmp_path):
     # 00:00 shifted back 30 minutes -> previous day 23:30.
     assert readings[0][0].hour == 23
     assert readings[0][0].minute == 30
+
+
+async def test_aware_iso_timestamp_converted_to_local_tz(hass, tmp_path):
+    """Aware UTC ISO timestamps are converted to HA's local timezone."""
+    await hass.config.async_set_time_zone("Europe/Dublin")
+    csv_path = tmp_path / "utc.csv"
+    # 01:30Z in July is 02:30 IST (Europe/Dublin, UTC+1). With -30 min shift
+    # that becomes 02:00 local (cheap bucket), not 01:00 UTC (night bucket).
+    csv_path.write_text(
+        "Read Date and End Time,Read Value (kWh)\n2026-07-15T01:30:00Z,1.0\n",
+        encoding="utf-8",
+    )
+    entry = _entry(
+        tmp_path,
+        **{
+            CONF_TIME_SHIFT_MINUTES: -30,
+            CONF_RATES: {"cheap": 0.10, "night": 0.20, "day": 0.30, "peak": 0.40},
+        },
+    )
+    coordinator = ESBSmartMeterCoordinator(hass, entry)
+    readings = coordinator.costed_readings()
+    assert len(readings) == 1
+    when, _, cost = readings[0]
+    assert when.hour == 2
+    assert when.minute == 0
+    assert cost == pytest.approx(0.10)
