@@ -15,7 +15,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, UnitOfEnergy
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
@@ -246,6 +246,8 @@ _MONETARY_KEYS = {
     if d.device_class == SensorDeviceClass.MONETARY
 }
 
+_EXPORT_KEYS = {d.key for d in EXPORT_SENSORS}
+
 # Diagnostic sensors that stay available even before any CSV data is found.
 _ALWAYS_AVAILABLE = {
     "last_import",
@@ -265,12 +267,32 @@ async def async_setup_entry(
     coordinator: ESBSmartMeterCoordinator = hass.data[DOMAIN][entry.entry_id]
     descriptions = list(SENSORS)
     data = coordinator.data or {}
-    if data.get("has_export") or coordinator.export_rate:
+    export_added = bool(data.get("has_export") or coordinator.export_rate)
+    if export_added:
         descriptions += list(EXPORT_SENSORS)
     async_add_entities(
         ESBSmartMeterSensor(coordinator, entry, description)
         for description in descriptions
     )
+
+    if not export_added:
+        unsub: Callable[[], None] | None = None
+
+        @callback
+        def _maybe_add_export_sensors() -> None:
+            nonlocal unsub
+            if not (coordinator.data and coordinator.data.get("has_export")):
+                return
+            if unsub is not None:
+                unsub()
+                unsub = None
+            async_add_entities(
+                ESBSmartMeterSensor(coordinator, entry, description)
+                for description in EXPORT_SENSORS
+            )
+
+        unsub = coordinator.async_add_listener(_maybe_add_export_sensors)
+        entry.async_on_unload(unsub)
 
 
 class ESBSmartMeterSensor(CoordinatorEntity[ESBSmartMeterCoordinator], SensorEntity):
@@ -305,7 +327,10 @@ class ESBSmartMeterSensor(CoordinatorEntity[ESBSmartMeterCoordinator], SensorEnt
         """Return if entity is available."""
         if self.entity_description.key in _ALWAYS_AVAILABLE:
             return True
-        return bool(self.coordinator.data and self.coordinator.data.get("available"))
+        data = self.coordinator.data or {}
+        if self.entity_description.key in _EXPORT_KEYS:
+            return bool(data.get("has_export") or data.get("available"))
+        return bool(data.get("available"))
 
     @property
     def native_value(self) -> Any:

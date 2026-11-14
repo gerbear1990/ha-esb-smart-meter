@@ -46,14 +46,21 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
         settings_match = re.findall(r"(?<=var SETTINGS = )\S*;", response_1.text)
         if not settings_match:
             raise ESBDownloadError("ESB login page did not contain expected settings.")
-        settings = json.loads(settings_match[0][:-1])
+        try:
+            settings = json.loads(settings_match[0][:-1])
+            trans_id = settings["transId"]
+            csrf_token = settings["csrf"]
+        except (json.JSONDecodeError, KeyError, TypeError) as err:
+            raise ESBDownloadError(
+                "ESB login page contained invalid settings payload."
+            ) from err
         cookies_1 = session.cookies.get_dict()
 
         sleep(10)
         response_2 = session.post(
             "https://login.esbnetworks.ie/esbntwkscustportalprdb2c01.onmicrosoft.com/"
             "B2C_1A_signup_signin/SelfAsserted?tx="
-            + settings["transId"]
+            + trans_id
             + "&p=B2C_1A_signup_signin",
             data={
                 "signInName": username,
@@ -61,7 +68,7 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
                 "request_type": "RESPONSE",
             },
             headers={
-                "x-csrf-token": settings["csrf"],
+                "x-csrf-token": csrf_token,
                 "User-Agent": USER_AGENT,
                 "Accept": "application/json, text/javascript, */*; q=0.01",
                 "Accept-Language": "en-US,en;q=0.5",
@@ -90,8 +97,8 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
             "B2C_1A_signup_signin/api/CombinedSigninAndSignup/confirmed",
             params={
                 "rememberMe": False,
-                "csrf_token": settings["csrf"],
-                "tx": settings["transId"],
+                "csrf_token": csrf_token,
+                "tx": trans_id,
                 "p": "B2C_1A_signup_signin",
             },
             headers={
@@ -121,18 +128,23 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
 
         soup = BeautifulSoup(response_3.content, "html.parser")
         form = soup.find("form", {"id": "auto"})
-        if form is None:
+        if form is None or not form.get("action"):
             raise ESBDownloadError("ESB login response did not include the expected auto form.")
+
+        form_fields: dict[str, str] = {}
+        for field_name in ("state", "client_info", "code"):
+            field = form.find("input", {"name": field_name})
+            if field is None or field.get("value") is None:
+                raise ESBDownloadError(
+                    f"ESB login auto form was missing required field '{field_name}'."
+                )
+            form_fields[field_name] = field["value"]
 
         sleep(2)
         response_4 = session.post(
             form["action"],
             allow_redirects=False,
-            data={
-                "state": form.find("input", {"name": "state"})["value"],
-                "client_info": form.find("input", {"name": "client_info"})["value"],
-                "code": form.find("input", {"name": "code"})["value"],
-            },
+            data=form_fields,
             headers={
                 "User-Agent": USER_AGENT,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -203,7 +215,10 @@ def download_latest_csv(username: str, password: str, mprn: str) -> ESBDownloadR
             timeout=(10, 10),
         )
         response_7.raise_for_status()
-        token = json.loads(response_7.text)["token"]
+        try:
+            token = json.loads(response_7.text)["token"]
+        except (json.JSONDecodeError, KeyError, TypeError) as err:
+            raise ESBDownloadError("ESB anti-forgery token response was invalid.") from err
 
         response_8 = session.post(
             "https://myaccount.esbnetworks.ie/energymanagement/api/consumption/DownloadHdfPeriodic",

@@ -21,7 +21,11 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from homeassistant.components.recorder import get_instance
-from homeassistant.components.recorder.models import StatisticData, StatisticMetaData
+from homeassistant.components.recorder.models import (
+    StatisticData,
+    StatisticMeanType,
+    StatisticMetaData,
+)
 from homeassistant.components.recorder.statistics import (
     async_add_external_statistics,
     get_last_statistics,
@@ -166,11 +170,12 @@ async def _write_pair(
     async_add_external_statistics(
         hass,
         StatisticMetaData(
-            has_mean=False,
+            mean_type=StatisticMeanType.NONE,
             has_sum=True,
             name=f"{coordinator.name} {energy_label}",
             source=DOMAIN,
             statistic_id=energy_id,
+            unit_class="energy",
             unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         ),
         energy_stats,
@@ -178,11 +183,12 @@ async def _write_pair(
     async_add_external_statistics(
         hass,
         StatisticMetaData(
-            has_mean=False,
+            mean_type=StatisticMeanType.NONE,
             has_sum=True,
             name=f"{coordinator.name} {money_label}",
             source=DOMAIN,
             statistic_id=money_id,
+            unit_class=None,
             unit_of_measurement=coordinator.currency,
         ),
         money_stats,
